@@ -160,7 +160,7 @@
         composer.addPass(renderPass);
 
         const taaRenderPass = new THREE.TAARenderPass(scene, camera);
-        taaRenderPass.sampleLevel = 3; // 샘플 레벨 조정
+        taaRenderPass.sampleLevel = 2; // 샘플 레벨 조정
         composer.addPass(taaRenderPass);
 
         function animate() {
