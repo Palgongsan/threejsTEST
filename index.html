@@ -17,10 +17,35 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
     <!-- 사용할 후처리 효과 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval'">
+    <style>
+        /* 로딩바 스타일 */
+        #loadingBar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 10px;
+            background-color: #ccc;
+        }
+        #loadingBar div {
+            height: 100%;
+            width: 0;
+            background-color: #4caf50;
+        }
+        #loadingText {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
+    <div id="loadingBar"><div></div></div>
+    <div id="loadingText">Loading...</div>
     <!-- 3D 모델이 렌더링될 캔버스 -->
     <script>
         let model, isRotating = false;
@@ -33,13 +58,12 @@
 
         // 카메라 FOV 변경 함수
         function changeCameraFocalLength(focalLength) {
-        const filmGauge = 85; // 대부분의 풀프레임 카메라의 기준인 35mm 필름 게이지 사용
-        camera.fov = 2 * Math.atan((filmGauge / (2 * focalLength))) * (180 / Math.PI); // 라디안을 도(degree)로 변환
-        camera.updateProjectionMatrix(); // 카메라 투영 매트릭스 업데이트
+            const filmGauge = 85; // 대부분의 풀프레임 카메라의 기준인 35mm 필름 게이지 사용
+            camera.fov = 2 * Math.atan((filmGauge / (2 * focalLength))) * (180 / Math.PI); // 라디안을 도(degree)로 변환
+            camera.updateProjectionMatrix(); // 카메라 투영 매트릭스 업데이트
         }
 
         changeCameraFocalLength(100);
-
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -78,7 +102,6 @@
         fillLight.castShadow = false;
         scene.add(fillLight);
 
-
         const backLight = new THREE.DirectionalLight(0xffffff, 1);
         backLight.position.set(0, -10, -10);
         backLight.castShadow = true;
@@ -89,8 +112,6 @@
             .load('studio_small_08_2k.hdr', function (texture) {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 scene.environment = texture;
-
-        
             });
 
         const loader = new THREE.GLTFLoader();
@@ -100,22 +121,27 @@
                 if (object.isMesh) {
                     object.castShadow = true;
                     object.receiveShadow = true;
-                                    // 새로운 재질 설정
-                const material = new THREE.MeshStandardMaterial({
-                    map: object.material.map, // 기존의 텍스처 맵을 유지
-                    aoMap: object.material.aoMap, // AO 맵
-                    aoMapIntensity: 10.0, // AO 강도 조절
-                    metalness: 1, // 금속성 설정
-                    roughness: 0.6, // 거칠기 설정
-                    normalMap: object.material.normalMap, // 노말 맵
-                    normalScale: new THREE.Vector2(1.0, 1.0) // 노말 맵 스케일 조절
-                });
+                    // 새로운 재질 설정
+                    const material = new THREE.MeshStandardMaterial({
+                        map: object.material.map, // 기존의 텍스처 맵을 유지
+                        aoMap: object.material.aoMap, // AO 맵
+                        aoMapIntensity: 10.0, // AO 강도 조절
+                        metalness: 1, // 금속성 설정
+                        roughness: 0.6, // 거칠기 설정
+                        normalMap: object.material.normalMap, // 노말 맵
+                        normalScale: new THREE.Vector2(1.0, 1.0) // 노말 맵 스케일 조절
+                    });
 
-                object.material = material;
+                    object.material = material;
                 }
             });
             scene.add(model);
-        }, undefined, function (error) {
+            document.getElementById('loadingBar').style.display = 'none';
+            document.getElementById('loadingText').style.display = 'none';
+        }, function (xhr) {
+            const loaded = (xhr.loaded / xhr.total) * 100;
+            document.getElementById('loadingBar').firstElementChild.style.width = loaded + '%';
+        }, function (error) {
             console.error(error);
         });
 
@@ -123,12 +149,6 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const composer = new THREE.EffectComposer(renderer);
-        composer.addPass(new THREE.RenderPass(scene, camera));
-
-
-
         });
 
         function animate() {
