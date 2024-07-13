@@ -42,12 +42,13 @@
             font-size: 14px;
         }
     </style>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'nonce-123456';">
 </head>
 <body>
     <div id="loadingBar"><div></div></div>
     <div id="loadingText">Loading...</div>
     <!-- 3D 모델이 렌더링될 캔버스 -->
-    <script>
+    <script nonce="123456">
         let model, isRotating = false;
 
         const scene = new THREE.Scene();
