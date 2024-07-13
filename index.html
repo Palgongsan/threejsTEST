@@ -17,8 +17,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
     <!-- 사용할 후처리 효과 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
     <style>
         /* 로딩바 스타일 */
         #loadingBar {
@@ -154,22 +152,13 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // FXAA 적용
-        const composer = new THREE.EffectComposer(renderer);
-        const renderPass = new THREE.RenderPass(scene, camera);
-        composer.addPass(renderPass);
-
-        const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-        fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
-        composer.addPass(fxaaPass);
-
         function animate() {
             requestAnimationFrame(animate);
             if (isRotating) {
                 model.rotation.y += 0.003;
             }
             controls.update();
-            composer.render(); // 후처리 렌더러로 렌더링
+            renderer.render(scene, camera);
         }
 
         animate();
