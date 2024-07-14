@@ -12,11 +12,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <!-- RGBELoader를 위한 Three.js 확장 라이브러리 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
-    <!-- 후처리 필수 구성 요소 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <!-- 사용할 후처리 효과 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
     <style>
         /* 로딩바 스타일 */
         #loadingBar {
@@ -59,7 +54,7 @@
 
         // 카메라 FOV 변경 함수
         function changeCameraFocalLength(focalLength) {
-            const filmGauge = 85; // 대부분의 풀프레임 카메라의 기준인 35mm 필름 게이지 사용
+            const filmGauge = 90; // 대부분의 풀프레임 카메라의 기준인 35mm 필름 게이지 사용
             camera.fov = 2 * Math.atan((filmGauge / (2 * focalLength))) * (180 / Math.PI); // 라디안을 도(degree)로 변환
             camera.updateProjectionMatrix(); // 카메라 투영 매트릭스 업데이트
         }
@@ -81,7 +76,7 @@
         controls.maxDistance = 0.3;
 
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 2.2; // 노출 설정
+        renderer.toneMappingExposure = 1.7; // 노출 설정
 
         // 조명 추가
         const keyLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -98,21 +93,23 @@
         fillLight.castShadow = true;
         scene.add(fillLight);
 
-        const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+        const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
         fillLight.position.set(-5, 5, 10);
         fillLight.castShadow = false;
         scene.add(fillLight);
 
-        const backLight = new THREE.DirectionalLight(0xffffff, 1);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
         backLight.position.set(0, -10, -10);
         backLight.castShadow = true;
         scene.add(backLight);
 
+        let hdriTexture;
         new THREE.RGBELoader()
             .setPath('')
-            .load('Jewelry-studio-HDRI.hdr', function (texture) {
+            .load('studio_small_08_2k.hdr', function (texture) {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 scene.environment = texture;
+                hdriTexture = texture;
             });
 
         const loader = new THREE.GLTFLoader();
@@ -126,11 +123,11 @@
                     const material = new THREE.MeshStandardMaterial({
                         map: object.material.map, // 기존의 텍스처 맵을 유지
                         aoMap: object.material.aoMap, // AO 맵
-                        aoMapIntensity: 1.0, // AO 강도 조절
+                        aoMapIntensity: 3.8, // AO 강도 조절
                         metalness: 1, // 금속성 설정
                         roughness: 0.6, // 거칠기 설정
                         normalMap: object.material.normalMap, // 노말 맵
-                        normalScale: new THREE.Vector2(1.0, 1.0) // 노말 맵 스케일 조절
+                        normalScale: new THREE.Vector2(0.4, 0.4) // 노말 맵 스케일 조절
                     });
 
                     object.material = material;
