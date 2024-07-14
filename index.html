@@ -110,7 +110,7 @@
 
         new THREE.RGBELoader()
             .setPath('')
-            .load('studio_small_08_2k.hdr', function (texture) {
+            .load('Jewelry-studio-HDRI.hdr', function (texture) {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 scene.environment = texture;
             });
