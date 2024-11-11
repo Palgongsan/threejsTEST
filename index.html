@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js GLB Loader with OrbitControls and HDRI</title>
+    <title>Three.js GLB Loader with FXAA and OrbitControls</title>
     <!-- Three.js 라이브러리 CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- GLTFLoader를 위한 Three.js 확장 라이브러리 CDN -->
@@ -12,6 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <!-- RGBELoader를 위한 Three.js 확장 라이브러리 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    <!-- EffectComposer와 FXAA를 위한 라이브러리 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
     <style>
         /* 로딩바 스타일 */
         #loadingBar {
@@ -42,7 +47,6 @@
 <body>
     <div id="loadingBar"><div></div></div>
     <div id="loadingText">Loading...</div>
-    <!-- 3D 모델이 렌더링될 캔버스 -->
     <script nonce="123456">
         let model, isRotating = false;
 
@@ -52,20 +56,22 @@
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 1000);
         camera.position.z = 3;
 
-        // 카메라 FOV 변경 함수
-        function changeCameraFocalLength(focalLength) {
-            const filmGauge = 90; // 대부분의 풀프레임 카메라의 기준인 35mm 필름 게이지 사용
-            camera.fov = 2 * Math.atan((filmGauge / (2 * focalLength))) * (180 / Math.PI); // 라디안을 도(degree)로 변환
-            camera.updateProjectionMatrix(); // 카메라 투영 매트릭스 업데이트
-        }
-
-        changeCameraFocalLength(100);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: false }); // 기본 안티앨리어싱 비활성화
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true; // 그림자 맵 활성화
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 그림자 부드러움 설정
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
+
+        // FXAA용 EffectComposer 설정
+        const composer = new THREE.EffectComposer(renderer);
+        composer.setSize(window.innerWidth, window.innerHeight);
+
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+        fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+        composer.addPass(fxaaPass);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
@@ -76,13 +82,12 @@
         controls.maxDistance = 0.3;
 
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.7; // 노출 설정
+        renderer.toneMappingExposure = 1.7;
 
-        // 조명 추가
         const keyLight = new THREE.DirectionalLight(0xffffff, 1);
         keyLight.position.set(0, 5, 10);
         keyLight.castShadow = true;
-        keyLight.shadow.mapSize.width = 2048; // 그림자 해상도
+        keyLight.shadow.mapSize.width = 2048;
         keyLight.shadow.mapSize.height = 2048;
         keyLight.shadow.camera.near = 0.5;
         keyLight.shadow.camera.far = 500;
@@ -94,9 +99,9 @@
         scene.add(fillLight);
 
         const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-        fillLight.position.set(-5, 5, 10);
-        fillLight.castShadow = false;
-        scene.add(fillLight);
+        fillLight2.position.set(-5, 5, 10);
+        fillLight2.castShadow = false;
+        scene.add(fillLight2);
 
         const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
         backLight.position.set(0, -10, -10);
@@ -119,17 +124,15 @@
                 if (object.isMesh) {
                     object.castShadow = true;
                     object.receiveShadow = true;
-                    // 새로운 재질 설정
                     const material = new THREE.MeshStandardMaterial({
-                        map: object.material.map, // 기존의 텍스처 맵을 유지
-                        aoMap: object.material.aoMap, // AO 맵
-                        aoMapIntensity: 3.8, // AO 강도 조절
-                        metalness: 1, // 금속성 설정
-                        roughness: 0.6, // 거칠기 설정
-                        normalMap: object.material.normalMap, // 노말 맵
-                        normalScale: new THREE.Vector2(0.4, 0.4) // 노말 맵 스케일 조절
+                        map: object.material.map,
+                        aoMap: object.material.aoMap,
+                        aoMapIntensity: 3.8,
+                        metalness: 1,
+                        roughness: 0.6,
+                        normalMap: object.material.normalMap,
+                        normalScale: new THREE.Vector2(0.4, 0.4)
                     });
-
                     object.material = material;
                 }
             });
@@ -147,6 +150,8 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
         });
 
         function animate() {
@@ -155,7 +160,7 @@
                 model.rotation.y += 0.003;
             }
             controls.update();
-            renderer.render(scene, camera);
+            composer.render(); // EffectComposer를 사용해 렌더링
         }
 
         animate();
