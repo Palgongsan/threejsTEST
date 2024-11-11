@@ -70,7 +70,7 @@
         composer.addPass(renderPass);
 
         const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-        fxaaPass.uniforms['resolution'].value.set(0.5 / window.innerWidth, 0.5 / window.innerHeight);
+        fxaaPass.uniforms['resolution'].value.set(5 / window.innerWidth, 5 / window.innerHeight);
         composer.addPass(fxaaPass);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
